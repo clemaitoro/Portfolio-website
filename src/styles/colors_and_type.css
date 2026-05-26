@@ -1,0 +1,349 @@
+/* =============================================================
+   Andrei Lupica — Portfolio Design System
+   Single source of truth for tokens. Import at the top of every artifact.
+   ============================================================= */
+
+/* ---------- Webfonts -------------------------------------------------- */
+
+/* Instrument Serif — display (Google Fonts) */
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap");
+
+/* General Sans — UI/body (Fontshare) */
+@import url("https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap");
+
+/* JetBrains Mono — mono (Google Fonts) */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap");
+
+/* =============================================================
+   Tokens
+   ============================================================= */
+:root {
+  /* ---------- Color ---------- */
+  --ink:    #0B0D10;   /* page background, dominant 2/3                  */
+  --strata: #12161C;   /* raised card surface                              */
+  --trace:  #1F2530;   /* hairline rule color                              */
+  --bone:   #ECEEF1;   /* primary text                                     */
+  --ash:    #7C8492;   /* secondary / meta text                            */
+  --ash-dim:#525A66;   /* tertiary / disabled text                         */
+
+  --pulse:     #6DF3D7;       /* oscilloscope cyan — the one accent       */
+  --pulse-40:  rgba(109, 243, 215, 0.40);
+  --pulse-20:  rgba(109, 243, 215, 0.20);
+  --pulse-08:  rgba(109, 243, 215, 0.08);
+
+  --ember:     #F4B842;       /* warm secondary signal                    */
+  --ember-20:  rgba(244, 184, 66, 0.20);
+
+  --flare:     #FF6B5A;       /* error / destructive only                 */
+
+  /* Tonal greys for chart axis / data overlays */
+  --grid-1: rgba(236, 238, 241, 0.04);
+  --grid-2: rgba(236, 238, 241, 0.08);
+
+  /* ---------- Spacing (4-base) ---------- */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  24px;
+  --s-6:  32px;
+  --s-7:  48px;
+  --s-8:  64px;
+  --s-9:  96px;
+  --s-10: 128px;
+  --s-11: 192px;
+
+  /* ---------- Radii ---------- */
+  --r-0: 0;
+  --r-1: 2px;
+  --r-2: 4px;
+  --r-pill: 999px;
+
+  /* ---------- Borders ---------- */
+  --hairline: 1px solid var(--trace);
+  --hairline-bone: 1px solid var(--bone);
+  --hairline-pulse: 1px solid var(--pulse);
+
+  /* ---------- Shadow (used sparingly — focus rings only) ---------- */
+  --ring-focus: 0 0 0 4px var(--pulse-20);
+
+  /* ---------- Animation ---------- */
+  --ease-instrument: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --d-fast:  120ms;
+  --d-base:  220ms;
+  --d-slow:  480ms;
+  --d-scene: 900ms;
+
+  /* ---------- Type families ---------- */
+  --ff-display: "Instrument Serif", "Cormorant Garamond", Georgia, serif;
+  --ff-sans:    "General Sans", "Inter Tight", system-ui, -apple-system, "Segoe UI",
+                Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ff-mono:    "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular,
+                Menlo, Monaco, "Courier New", monospace;
+
+  /* ---------- Type scale (clamp where worthwhile) ---------- */
+  --t-eyebrow: 12px;          /* + uppercase, tracking +0.12em            */
+  --t-meta:    13px;
+  --t-body:    16px;
+  --t-lede:    20px;
+  --t-h3:      28px;
+  --t-h2:      clamp(32px, 4vw, 44px);
+  --t-h1:      clamp(48px, 7vw, 72px);
+  --t-display: clamp(64px, 12vw, 128px);
+
+  --lh-tight:   1.05;
+  --lh-snug:    1.2;
+  --lh-normal:  1.45;
+  --lh-relaxed: 1.62;
+
+  --tracking-eyebrow: 0.14em;
+  --tracking-mono-tag: 0.08em;
+  --tracking-tight:   -0.02em;
+  --tracking-display: -0.025em;
+
+  /* ---------- Layout ---------- */
+  --max-content: 1440px;
+  --gutter:      80px;
+  --gutter-sm:   24px;
+  --col-count:   12;
+}
+
+/* =============================================================
+   Reset / base
+   ============================================================= */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--ff-sans);
+  font-size: var(--t-body);
+  line-height: var(--lh-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* Selection */
+::selection {
+  background: var(--pulse);
+  color: var(--ink);
+}
+
+/* =============================================================
+   Semantic type — drop-in classes that match the readme ramp
+   ============================================================= */
+.eyebrow {
+  font-family: var(--ff-mono);
+  font-size: var(--t-eyebrow);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--ash);
+  line-height: var(--lh-snug);
+}
+
+.meta {
+  font-family: var(--ff-mono);
+  font-size: var(--t-meta);
+  letter-spacing: var(--tracking-mono-tag);
+  color: var(--ash);
+  line-height: var(--lh-normal);
+}
+
+.body {
+  font-family: var(--ff-sans);
+  font-size: var(--t-body);
+  line-height: var(--lh-relaxed);
+  color: var(--bone);
+  max-width: 68ch;
+}
+
+.lede {
+  font-family: var(--ff-sans);
+  font-size: var(--t-lede);
+  line-height: 1.5;
+  color: var(--bone);
+  max-width: 60ch;
+  font-weight: 400;
+}
+
+.h3 {
+  font-family: var(--ff-sans);
+  font-size: var(--t-h3);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-tight);
+  font-weight: 500;
+  color: var(--bone);
+}
+
+.h2 {
+  font-family: var(--ff-display);
+  font-size: var(--t-h2);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--tracking-tight);
+  font-weight: 400;
+  color: var(--bone);
+}
+
+.h1 {
+  font-family: var(--ff-display);
+  font-size: var(--t-h1);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
+  font-weight: 400;
+  color: var(--bone);
+}
+
+.display {
+  font-family: var(--ff-display);
+  font-size: var(--t-display);
+  line-height: 0.95;
+  letter-spacing: var(--tracking-display);
+  font-weight: 400;
+  color: var(--bone);
+}
+
+.display em,
+.h1 em,
+.h2 em {
+  font-style: italic;
+  color: var(--bone);
+}
+
+/* Inline-mono accent used inside body copy */
+code,
+.mono {
+  font-family: var(--ff-mono);
+  font-size: 0.92em;
+  letter-spacing: 0.01em;
+  color: var(--pulse);
+  background: var(--pulse-08);
+  padding: 0.08em 0.4em;
+  border-radius: var(--r-1);
+}
+
+/* Links */
+a {
+  color: var(--bone);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--d-base) var(--ease-instrument),
+              color var(--d-base) var(--ease-instrument);
+}
+a:hover {
+  border-bottom-color: var(--pulse);
+}
+a:focus-visible {
+  outline: 1px solid var(--pulse);
+  outline-offset: 4px;
+  box-shadow: var(--ring-focus);
+}
+
+/* =============================================================
+   Primitive utilities
+   ============================================================= */
+.rule          { border: 0; border-top: var(--hairline); width: 100%; margin: var(--s-6) 0; }
+.rule--ticked  { position: relative; }
+.rule--ticked::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 1px;
+  height: 8px;
+  background: var(--pulse);
+}
+
+.card {
+  background: var(--strata);
+  border: var(--hairline);
+  border-radius: var(--r-0);
+  padding: var(--s-6);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--ff-mono);
+  font-size: var(--t-meta);
+  color: var(--bone);
+  padding: 6px 12px 6px 10px;
+  border: var(--hairline);
+  border-radius: var(--r-pill);
+  background: transparent;
+}
+.pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--pulse);
+  box-shadow: 0 0 0 4px var(--pulse-20);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--ff-sans);
+  font-size: var(--t-body);
+  font-weight: 500;
+  line-height: 1;
+  padding: 14px 20px;
+  border: var(--hairline);
+  background: transparent;
+  color: var(--bone);
+  cursor: pointer;
+  border-radius: var(--r-0);
+  transition: background var(--d-base) var(--ease-instrument),
+              color var(--d-base) var(--ease-instrument),
+              border-color var(--d-base) var(--ease-instrument),
+              transform var(--d-fast) var(--ease-instrument);
+}
+.btn:hover  { border-color: var(--pulse-40); background: var(--strata); }
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible {
+  outline: 1px solid var(--pulse);
+  outline-offset: 2px;
+  box-shadow: var(--ring-focus);
+}
+
+.btn--primary {
+  background: var(--pulse);
+  color: var(--ink);
+  border-color: var(--pulse);
+}
+.btn--primary:hover {
+  background: var(--bone);
+  border-color: var(--bone);
+}
+
+/* Grid scaffold */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--col-count), 1fr);
+  gap: var(--s-5);
+}
+@media (max-width: 720px) {
+  .grid { grid-template-columns: repeat(4, 1fr); gap: var(--s-4); }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
