@@ -12,7 +12,7 @@ export default function App() {
 
   const projects = [
     { id: "lseg",     num: "01", title: "London Stock Exchange · <em>Corporate-tree</em>", blurb: "An LLM + web-search pipeline that checks whether companies in a hierarchy still exist, have been renamed, merged or dissolved. Plus an evaluation framework + cost model.", meta: ["LSEG · Contract", "May 2026 – now", "AI Engineer"] },
-    { id: "bci",      num: "02", title: "Minimal Command <em>AAC</em>",          blurb: "A speech tool for people who can only make a few small movements. Reads four facial gestures, turns them into phrases. Published thesis — 260+ downloads in 30 days.",                   meta: ["Bachelor thesis", "2025 – 26", "Solo"] },
+    { id: "bci",      num: "02", title: "Minimal Command <em>AAC</em>",          blurb: "A speech tool for people who can only make a few small movements. Reads four facial gestures, turns them into phrases. Published thesis — cited in an Elsevier review paper (Biocybernetics and Biomedical Engineering).",                   meta: ["Bachelor thesis", "2025 – 26", "Solo"] },
     { id: "cloud",    num: "03", title: "<em>CloudGeometry</em>",                blurb: "Sub-second RAG pipelines on AWS (Bedrock + ECS + AuroraDB), multi-stage agent workflows, and a low-code platform that shipped 10+ NLP agents via Langflow + GPT / Claude / Gemini.",   meta: ["CloudGeometry", "Oct 2025 – May 2026", "AI & MLOps Engineer"] },
     { id: "telekom",  num: "04", title: "Deutsche <em>Telekom</em>",             blurb: "Enterprise ingestion + context-aware RAG: Dagster pipelines feeding Elasticsearch + MongoDB, dynamic conversational interfaces on top, 35% faster query resolution.",                 meta: ["Deutsche Telekom", "Aug 2025 – now", "Data Scientist · PT"] },
     { id: "hackathon",num: "05", title: "Ultrahack <em>DEFINE</em> · 1st place", blurb: "Camera-only, real-time wind prediction for bullet trajectories. ResNet-18 features + LSTM temporal drift → under 5° angular error in 48 hours.",                              meta: ["Ultrahack · powered by Sako", "May 2025", "Team lead"] },
@@ -93,7 +93,7 @@ export default function App() {
       year: "2025 – 26",
       role: "Bachelor thesis · solo",
       stack: ["Python", "PyTorch", "BrainFlow", "OpenBCI", "Tkinter"],
-      source: "Published on Theseus. 260+ downloads in its first 30 days.",
+      source: "Published on Theseus. Cited in an Elsevier review paper (Biocybernetics and Biomedical Engineering).",
       caseStudyUrl: "https://scholar.google.com/scholar?q=Lupica%20A.E..%20Minimal%20command%20AAC%3A%20comparing%20classic%20signal%20processing%20vs%20AI%20on%20minimal%20EEG%2FEMG.%20Bachelor%E2%80%99s%20thesis%2C%20Satakunta%20University%20of%20Applied%20Sciences%3B%202026.",
       body: [
         "Some people can't use a keyboard, a touchscreen, or reliably press a switch. They still want to say things. The system reads four small gestures — a blink, a finger tap, a clenched fist, a raised eyebrow — and turns them into navigation through a phrase tree, then speaks the chosen phrase out loud.",

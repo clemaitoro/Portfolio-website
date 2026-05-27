@@ -275,7 +275,7 @@ export function Experience() {
     { year: "Aug 2025",  title: "Deutsche Telekom",          sub: "Data Scientist (Part-Time) — Dagster + RAG + GPT", kind: "work" },
     { year: "Oct 2025",  title: "CloudGeometry",             sub: "AI & MLOps Engineer — AWS Bedrock RAG + Langflow platform", kind: "work" },
     { year: "Feb 2026",  title: "Graduated SAMK",            sub: "BEng · AI / Data Engineering · Pori, Finland", kind: "school" },
-    { year: "May 2026",  title: "Thesis on Theseus",         sub: "Minimal Command AAC — 260+ downloads in 30 days", kind: "award" },
+    { year: "May 2026",  title: "Thesis on Theseus",         sub: "Minimal Command AAC — cited in an Elsevier review (Biocybernetics and Biomedical Engineering)", kind: "award" },
     { year: "May 2026",  title: "London Stock Exchange",     sub: "AI Engineer (Contract) — corporate-tree validation pipeline", kind: "work" },
     { year: "Sep 2026",  title: "MSc Quantum Computing",     sub: "Southern Denmark University — Odense", kind: "school" },
   ];
@@ -333,7 +333,7 @@ export function Awards() {
             <div className="award-card__name">Minimal Command AAC — Thesis</div>
             <div className="award-card__by">Theseus · May 2026</div>
             <p className="award-card__body">
-              Real-time brain-computer interface comparing classic signal processing against deep learning for facial-gesture detection. <strong>260+ downloads in its first 30 days.</strong>
+              Real-time brain-computer interface comparing classic signal processing against deep learning for facial-gesture detection. <strong>Cited in an Elsevier review paper (Biocybernetics and Biomedical Engineering).</strong>
             </p>
           </article>
 
@@ -379,7 +379,7 @@ export function About() {
               Before that I led MLOps and platform work at <strong>CloudGeometry</strong>, co-built a software-engineer AI agent at <strong>Digital Nexus AI</strong>, and shipped a Finnish-language land-use AI for the <strong>Satakuntaliitto</strong> regional council during my time at RoboAI Academy.
             </p>
             <p>
-              I also wrote a thesis on brain-computer interfaces (<strong>260+ downloads in 30 days</strong> on Theseus) and won <strong>1st place at Ultrahack DEFINE 2025</strong>. In September I move to Odense to start an MSc in Quantum Computing at SDU.
+              I also wrote a thesis on brain-computer interfaces (published on Theseus and <strong>cited in an Elsevier review paper, Biocybernetics and Biomedical Engineering</strong>) and won <strong>1st place at Ultrahack DEFINE 2025</strong>. In September I move to Odense to start an MSc in Quantum Computing at SDU.
             </p>
           </div>
         </div>
