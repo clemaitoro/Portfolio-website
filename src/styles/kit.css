@@ -416,18 +416,45 @@
     -webkit-line-clamp: unset;
     overflow: visible;
   }
-
-  /* In the right panel, stack the copy blocks for the narrower width. */
-  .work-split__featured .featured__copy {
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
 }
 
 /* The panel slides in from the right each time the selection changes
-   (the React `key` remounts it, replaying this animation). */
+   (the React `key` remounts it, replaying this animation).
+   It is also a container, so the demos inside can respond to the PANEL
+   width rather than the viewport width. */
 .work-split__featured {
+  container-type: inline-size;
+  container-name: panel;
   animation: slideFromWall var(--d-slow) var(--ease-instrument);
+}
+
+/* When the panel is narrow (always true in the side-by-side layout, since
+   the panel caps around 760px), collapse every multi-column demo so its
+   internal columns stop overlapping. */
+@container panel (max-width: 820px) {
+  .featured__copy { grid-template-columns: 1fr; gap: 28px; }
+
+  .demo__row { grid-template-columns: 1fr; gap: 24px; }
+
+  .rag { grid-template-columns: 1fr; min-height: 0; }
+  .rag__col { border-right: none; border-bottom: 1px solid var(--trace); }
+  .rag__col:last-child { border-bottom: none; }
+
+  .lseg { grid-template-columns: 1fr; min-height: 0; }
+  .lseg__controls, .lseg__tree { border-right: none; border-bottom: 1px solid var(--trace); }
+  .lseg__tree { min-height: 360px; }
+
+  .telekom__pipe { grid-template-columns: 1fr 1fr; }
+  .telekom__chat { grid-template-columns: 1fr; }
+
+  .cgeo__flow { flex-wrap: nowrap; }
+
+  .dnai { grid-template-columns: 1fr; min-height: 0; }
+  .dnai__col { border-right: none; border-bottom: 1px solid var(--trace); }
+  .dnai__col:last-child { border-bottom: none; }
+
+  .hack { grid-template-columns: 1fr; min-height: 0; }
+  .hack__col--ctrl { border-right: none; border-bottom: 1px solid var(--trace); }
 }
 @keyframes slideFromWall {
   from { opacity: 0; transform: translateX(48px); }
