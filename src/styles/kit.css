@@ -442,6 +442,14 @@
 
   .work-split__featured .hack { grid-template-columns: 1fr; min-height: 0; }
   .work-split__featured .hack__col--ctrl { border-right: none; border-bottom: 1px solid var(--trace); }
+  /* Cap the tall range SVG so the whole demo fits without scrolling. */
+  .work-split__featured .hack__range { flex: none; height: 300px; }
+
+  /* The BCI 3D scene's gesture orbs sit far from center and overflow the
+     narrow panel. Give the scene a taller box and scale the whole render
+     down so everything stays inside. */
+  .work-split__featured .featured--3d .featured__scene { aspect-ratio: 3 / 2; }
+  .work-split__featured .featured--3d .stage3d { transform: scale(0.58); }
 }
 
 /* The panel slides in from the right each time the selection changes

@@ -204,7 +204,7 @@ export function Stage3D({ children, perspective = 1400, parallaxStrength = 14, s
     return () => cancelAnimationFrame(raf);
   }, [spinRate, paused]);
   return (
-    <div ref={ref} style={{
+    <div ref={ref} className="stage3d" style={{
       position: "absolute", inset: 0, perspective: `${perspective}px`, perspectiveOrigin: "50% 50%",
       ...style
     }}>
