@@ -125,31 +125,42 @@ export default function App() {
         <div className="shell">
           <SectionHeader num="02 / Work" title="Seven shipped <em>engagements</em>." meta="Most recent first · LSEG · BCI · CloudGeometry · Telekom · Ultrahack · DN AI · Satakuntaliitto" />
 
-          <div className="work-list">
-            {projects.map(p => (
-              <ProjectRow
-                key={p.id}
-                num={p.num}
-                title={p.title}
-                blurb={p.blurb}
-                meta={p.meta}
-                isActive={focused === p.id}
-                onClick={() => {
-                  setFocused(p.id);
-                  setTimeout(() => {
-                    document.querySelector(".featured")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }, 50);
-                }}
-              />
-            ))}
-          </div>
+          <div className="work-split">
+            <div className="work-split__list">
+              <div className="work-list work-list--compact">
+                {projects.map(p => (
+                  <ProjectRow
+                    key={p.id}
+                    num={p.num}
+                    title={p.title}
+                    blurb={p.blurb}
+                    meta={p.meta}
+                    isActive={focused === p.id}
+                    onClick={() => {
+                      setFocused(p.id);
+                      // On narrow (stacked) layouts the panel sits below the list,
+                      // so bring it into view. On the side-by-side desktop layout
+                      // it's already visible, so this is a no-op there.
+                      if (window.matchMedia("(max-width: 1079px)").matches) {
+                        setTimeout(() => {
+                          document.querySelector(".work-split__featured")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }, 50);
+                      }
+                    }}
+                  />
+                ))}
+              </div>
 
-          <div className="work-cue">
-            <span>Showing <span className="pulse-txt">{featuredCopy[focused].eyebrow}</span></span>
-            <span className="mono-dim">click a row to switch ↑</span>
-          </div>
+              <div className="work-cue">
+                <span>Showing <span className="pulse-txt">{featuredCopy[focused].eyebrow}</span></span>
+                <span className="mono-dim">select a project →</span>
+              </div>
+            </div>
 
-          <FeaturedProject sceneId={focused} project={featuredCopy[focused]} />
+            <div className="work-split__featured">
+              <FeaturedProject key={focused} sceneId={focused} project={featuredCopy[focused]} />
+            </div>
+          </div>
         </div>
       </section>
 

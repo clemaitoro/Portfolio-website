@@ -368,6 +368,76 @@
 .work-cue .mono-dim  { color: var(--ash-dim); }
 
 /* ============================================================
+   Work — side-by-side "control panel" layout (desktop)
+   Pick a project on the left; it slides in from the right.
+   Below 1080px it falls back to the stacked layout.
+   ============================================================ */
+.work-split { display: block; }
+
+@media (min-width: 1080px) {
+  .work-split {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 56px;
+    align-items: start;
+  }
+  /* Keep the picker in view while the panel scrolls. */
+  .work-split__list {
+    position: sticky;
+    top: 88px;
+    align-self: start;
+  }
+  .work-split__featured { margin-top: 0; }
+  .work-split__featured .featured { margin-top: 0; }
+
+  /* Compact rows for the narrow left column. */
+  .work-list--compact .project-row {
+    grid-template-columns: 38px 1fr;
+    padding: 18px 0;
+    gap: 4px 8px;
+  }
+  .work-list--compact .project-row:hover,
+  .work-list--compact .project-row.is-active { padding-left: 14px; }
+  .work-list--compact .project-row__meta { display: none; }
+  .work-list--compact .project-row::after { display: none; }
+  .work-list--compact .project-row__title { font-size: 22px; line-height: 1.1; }
+  .work-list--compact .project-row__blurb {
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: none;
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  /* Active row keeps its full blurb. */
+  .work-list--compact .project-row.is-active .project-row__blurb {
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+
+  /* In the right panel, stack the copy blocks for the narrower width. */
+  .work-split__featured .featured__copy {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+/* The panel slides in from the right each time the selection changes
+   (the React `key` remounts it, replaying this animation). */
+.work-split__featured {
+  animation: slideFromWall var(--d-slow) var(--ease-instrument);
+}
+@keyframes slideFromWall {
+  from { opacity: 0; transform: translateX(48px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .work-split__featured { animation: none; }
+}
+
+/* ============================================================
    Featured project + scene
    ============================================================ */
 .featured {
