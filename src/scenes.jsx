@@ -1,7 +1,8 @@
 /* ============================================================
    scenes.jsx — Hero + project scenes & interactive demos.
    • Hero: real 3D wireframe shapes.
-   • BCI: real 3D head + orbiting orbs (the only 3D scene).
+   • BCI: animated OpenBCI Cyton montage diagram (head + forearm,
+     wired into the board) that reacts to the gesture demo.
    • All other projects: 2D INTERACTIVE demos, no 3D shapes.
    ============================================================ */
 import React from "react";
@@ -58,119 +59,224 @@ export function HeroScene() {
   );
 }
 
-/* ---------- BCI 3D scene -------------------------------------------- */
-/* A "neural" brain made of two counter-rotating wireframe spheres, with
-   four cardinal gesture orbs connected by hairline rays that light up
-   when the matching demo button is pressed. */
-export function SceneBCI({ activeGesture = null }) {
-  const gestures = [
-    // y < 0 = top; we use cardinal positions in screen space
-    { id: "blink", label: "blink",  color: "#6DF3D7", dx:    0, dy: -220 }, // top
-    { id: "tap",   label: "tap",    color: "#6DF3D7", dx:  280, dy:    0 }, // right
-    { id: "fist",  label: "clench", color: "#F4B842", dx:    0, dy:  220 }, // bottom
-    { id: "brow",  label: "brow",   color: "#F4B842", dx: -280, dy:    0 }, // left
-  ];
+/* ---------- BCI scene — OpenBCI Cyton montage diagram ---------------- */
+/* Faithful to the real setup: a head wearing the Cyton headband with
+   Fp1/Fp2 electrodes + REF/GND ear clips, wired into the OpenBCI box,
+   and a forearm with EMG Ch1+/Ch1− pads. Gestures from the demo light
+   up the matching electrodes, fire a signal pulse down the wires, and
+   burst the live scope traces. The face reacts too: eyes blink, brows
+   raise, the hand clenches. */
 
+const BCI_WIRES = {
+  fp1:  "M172 178 C 148 116, 244 88, 296 126 C 338 156, 368 178, 402 196",
+  fp2:  "M238 176 C 286 130, 344 170, 402 214",
+  ref:  "M112 262 C 118 352, 276 352, 402 232",
+  gnd:  "M298 260 C 332 294, 366 268, 402 250",
+  emg1: "M736 366 C 690 320, 640 286, 578 228",
+  emg2: "M800 380 C 724 350, 636 314, 578 246",
+};
+
+const BCI_GESTURES = {
+  blink: { ch: "eeg", ember: false, status: "BLINK → FP1 · FP2" },
+  brow:  { ch: "eeg", ember: true,  status: "BROW → FP1 · FP2" },
+  tap:   { ch: "emg", ember: false, status: "TAP → EMG CH1" },
+  fist:  { ch: "emg", ember: true,  status: "CLENCH → EMG CH1" },
+};
+
+const TAU = Math.PI * 2;
+function makeWave(width, steps, fn) {
+  let d = "";
+  for (let i = 0; i <= steps; i++) {
+    const x = (i / steps) * width;
+    d += (i === 0 ? "M" : "L") + x.toFixed(1) + " " + fn(x).toFixed(2) + " ";
+  }
+  return d;
+}
+/* Periodic over 140 units so the two scrolling copies tile seamlessly. */
+const EEG_WAVE = makeWave(140, 70, x =>
+  3.2 * Math.sin(TAU * 2 * x / 140) + 2.1 * Math.sin(TAU * 5 * x / 140 + 1.3) + 1.8 * Math.sin(TAU * 9 * x / 140 + 0.4));
+const EMG_WAVE = makeWave(140, 110, x =>
+  1.2 * Math.sin(TAU * 13 * x / 140) + 0.9 * Math.sin(TAU * 23 * x / 140 + 0.8) + 0.8 * Math.sin(TAU * 31 * x / 140 + 2.1));
+
+function Electrode({ x, y, r = 10, hot, ember, delay = 0 }) {
   return (
-    <Stage3D perspective={1500} parallaxStrength={12} spinRate={0.08}>
-      {({ t }) => (
-        <>
-          {/* faint dot cloud back */}
-          <Float3D x={0} y={0} z={-380} t={t} ry={0.2}>
-            <DotCloud count={80} radius={420} color="#7C8492" size={2} />
-          </Float3D>
-
-          {/* connection rays — pure SVG plane behind orbs */}
-          <Float3D x={0} y={0} z={-40}>
-            <ConnectionRays gestures={gestures} active={activeGesture} />
-          </Float3D>
-
-          {/* outer brain sphere */}
-          <Float3D x={0} y={0} z={-60} t={t} ry={0.45} rx={0.18}>
-            <WireSphere size={300} color="#6DF3D7" thickness={1} rings={8} opacity={0.55} />
-          </Float3D>
-
-          {/* inner counter-rotating sphere */}
-          <Float3D x={0} y={0} z={-40} t={-t * 1.6} ry={0.55} rx={-0.22}>
-            <WireSphere size={180} color="#ECEEF1" thickness={1} rings={6} opacity={0.45} />
-          </Float3D>
-
-          {/* core pulse dot (always pulses gently) */}
-          <Float3D x={0} y={0} z={0}>
-            <div style={{
-              width: 14, height: 14, borderRadius: "50%",
-              background: "#6DF3D7",
-              boxShadow: "0 0 24px #6DF3D7, 0 0 48px rgba(109,243,215,0.6)",
-              animation: "bciCorePulse 2.6s cubic-bezier(0.2,0.7,0.2,1) infinite",
-            }}/>
-          </Float3D>
-
-          {/* gesture orbs at cardinal positions */}
-          {gestures.map((g) => {
-            const active = activeGesture === g.id;
-            const fwd = active ? 160 : 60;
-            return (
-              <Float3D key={g.id} x={g.dx} y={g.dy} z={fwd} scale={active ? 1.4 : 1}>
-                <GestureOrb label={g.label} color={g.color} active={active} />
-              </Float3D>
-            );
-          })}
-        </>
-      )}
-    </Stage3D>
+    <g className={"bci-elg" + (hot ? " is-hot" : "") + (ember ? " is-ember" : "")}>
+      <circle className="bci-halo" cx={x} cy={y} r={r + 7} style={{ animationDelay: `${delay}ms` }} />
+      <circle className="bci-el-ring" cx={x} cy={y} r={r} />
+      <circle className="bci-el-core" cx={x} cy={y} r={r * 0.42} />
+    </g>
   );
 }
 
-/* SVG plane spanning the scene with rays from center → each orb position.
-   Lights up the active ray with the orb's color. */
-function ConnectionRays({ gestures, active }) {
-  // viewBox spans roughly the orb radius × 2
-  const W = 800, H = 600, cx = W / 2, cy = H / 2;
+function ScopeStrip({ x, y, w, h, clipId, label, color, path, burst, fast }) {
+  const cy = y + h / 2;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} fill="none" style={{
-      position: "absolute", left: "50%", top: "50%",
-      transform: "translate(-50%, -50%)",
-      overflow: "visible",
-    }}>
-      {gestures.map(g => {
-        const isActive = active === g.id;
-        // orb positions in svg coords (translate by dx, dy from center)
-        const ox = cx + g.dx;
-        const oy = cy + g.dy;
-        return (
-          <g key={g.id}>
-            <line x1={cx} y1={cy} x2={ox} y2={oy}
-              stroke={isActive ? g.color : "#1F2530"}
-              strokeWidth={isActive ? 1.6 : 1}
-              strokeDasharray={isActive ? "0" : "4 4"}
-              opacity={isActive ? 1 : 0.6}
-              style={{ transition: "all 220ms cubic-bezier(0.2,0.7,0.2,1)" }}
-            />
-            {isActive && (
-              <circle cx={ox} cy={oy} r="6" fill={g.color}>
-                <animate attributeName="r" values="6;14;6" dur="0.6s" repeatCount="1" />
-                <animate attributeName="opacity" values="1;0;1" dur="0.6s" repeatCount="1" />
-              </circle>
-            )}
+    <g>
+      <rect x={x} y={y} width={w} height={h} className="bci-strip" />
+      <text x={x + 8} y={cy + 3} className="bci-lbl bci-lbl--dim">{label}</text>
+      <clipPath id={clipId}><rect x={x + 66} y={y + 2} width={w - 72} height={h - 4} /></clipPath>
+      <g clipPath={`url(#${clipId})`}>
+        <g transform={`translate(${x + 66} ${cy})`}>
+          <g className={"bci-tracewrap" + (burst ? " is-burst" : "")}>
+            <g className={"bci-scroll" + (fast ? " bci-scroll--fast" : "")}>
+              <path className={`bci-trace bci-trace--${color}`} d={path} />
+              <path className={`bci-trace bci-trace--${color}`} d={path} transform="translate(140 0)" />
+            </g>
           </g>
-        );
-      })}
-    </svg>
+        </g>
+      </g>
+    </g>
   );
 }
 
-function GestureOrb({ label, color, active = false }) {
+export function SceneBCI({ activeGesture = null }) {
+  const fire = activeGesture ? BCI_GESTURES[activeGesture] : null;
+  // Bump the key on every trigger so the pulse animation replays even
+  // when the same gesture is pressed twice in a row.
+  const [tick, setTick] = React.useState(0);
+  React.useEffect(() => { if (activeGesture) setTick(t => t + 1); }, [activeGesture]);
+
+  const eegHot = fire?.ch === "eeg";
+  const emgHot = fire?.ch === "emg";
+  const rootCls = "bci-rig"
+    + (fire ? " is-firing" : "")
+    + (fire?.ember ? " is-ember" : "")
+    + (activeGesture ? ` is-${activeGesture}` : "");
+
   return (
-    <div style={{
-      width: 84, height: 84, borderRadius: "50%",
-      border: `1.5px solid ${color}`,
-      background: active ? color : "transparent",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "var(--ff-mono)", fontSize: 11, letterSpacing: "0.12em",
-      textTransform: "uppercase", color: active ? "#0B0D10" : color,
-      boxShadow: active ? `0 0 36px ${color}` : `0 0 12px ${color}40`,
-      transition: "all 220ms cubic-bezier(0.2,0.7,0.2,1)",
-    }}>{label}</div>
+    <svg viewBox="0 0 920 560" preserveAspectRatio="xMidYMid meet" className={rootCls}>
+      <defs>
+        <pattern id="bciDots" width="26" height="26" patternUnits="userSpaceOnUse">
+          <circle cx="1" cy="1" r="1" fill="rgba(236,238,241,0.05)" />
+        </pattern>
+      </defs>
+      <rect width="920" height="560" fill="url(#bciDots)" />
+
+      {/* dashed instrument frames, like a wiring schematic */}
+      <rect x="54" y="96" width="330" height="330" className="bci-frame" />
+      <text x="60" y="88" className="bci-lbl bci-lbl--dim">Subject · EEG/EOG montage</text>
+      <rect x="566" y="332" width="342" height="110" className="bci-frame" />
+      <text x="572" y="324" className="bci-lbl bci-lbl--dim">Forearm · EMG montage</text>
+
+      {/* wires: base + slow streaming dashes */}
+      {Object.entries(BCI_WIRES).map(([k, d]) => <path key={k} className="bci-wire" d={d} />)}
+      {Object.entries(BCI_WIRES).map(([k, d], i) => (
+        <path key={"f" + k} className="bci-wire--flow" d={d} style={{ animationDelay: `${i * -0.35}s` }} />
+      ))}
+
+      {/* ---------- HEAD (front view) ---------- */}
+      <g>
+        {/* face + neck + shoulders */}
+        <ellipse cx="205" cy="245" rx="82" ry="105" className="bci-line" fill="none" />
+        <path className="bci-line bci-line--soft" d="M168 342 C 170 366, 166 382, 158 394 M242 342 C 240 366, 244 382, 252 394" fill="none" />
+        <path className="bci-line bci-line--soft" d="M158 394 C 120 402, 84 414, 58 434 M252 394 C 290 402, 326 414, 352 434" fill="none" />
+        {/* ears */}
+        <path className="bci-line" d="M122 230 C 106 232, 104 260, 120 264 M288 230 C 304 232, 306 260, 290 264" fill="none" />
+        {/* face: brows raise on "brow", eyes close on "blink" */}
+        <path className="bci-line bci-brow" d="M156 212 Q 172 205 188 212" fill="none" />
+        <path className="bci-line bci-brow" d="M222 212 Q 238 205 254 212" fill="none" />
+        <ellipse className="bci-eye" cx="172" cy="228" rx="8.5" ry="3.6" />
+        <ellipse className="bci-eye" cx="238" cy="228" rx="8.5" ry="3.6" />
+        <path className="bci-line bci-line--soft" d="M205 232 L 201 258 Q 205 263 210 258" fill="none" />
+        <path className="bci-line bci-line--soft" d="M188 287 Q 205 294 222 287" fill="none" />
+
+        {/* Cyton headband: forehead strap + crown straps + top knob */}
+        <path className="bci-gear" d="M127 196 Q 205 178 283 196" fill="none" />
+        <path className="bci-gear" d="M127 206 Q 205 188 283 206" fill="none" />
+        <path className="bci-gear" d="M146 192 Q 205 92 264 192" fill="none" />
+        <path className="bci-gear" d="M168 188 Q 205 110 242 188" fill="none" />
+        <circle className="bci-gear" cx="205" cy="116" r="7" fill="none" />
+        <circle className="bci-gear" cx="205" cy="116" r="2.5" fill="none" />
+        <circle className="bci-gear" cx="146" cy="190" r="5" fill="none" />
+        <circle className="bci-gear" cx="264" cy="190" r="5" fill="none" />
+
+        {/* ear clips */}
+        <rect className="bci-clip" x="106" y="244" width="13" height="15" rx="2" />
+        <rect className="bci-clip" x="291" y="244" width="13" height="15" rx="2" />
+      </g>
+
+      {/* Fp1 / Fp2 electrodes on the strap */}
+      <Electrode x={172} y={188} r={10} hot={eegHot} ember={fire?.ember} delay={0} />
+      <Electrode x={238} y={188} r={10} hot={eegHot} ember={fire?.ember} delay={400} />
+
+      {/* head labels + leaders */}
+      <text x="108" y="124" textAnchor="end" className="bci-lbl">FP1</text>
+      <path className="bci-leader" d="M114 130 L 164 176" />
+      <text x="302" y="124" className="bci-lbl">FP2</text>
+      <path className="bci-leader" d="M296 130 L 246 176" />
+      <text x="44" y="226" className="bci-lbl">REF</text>
+      <path className="bci-leader" d="M70 232 L 106 248" />
+      <text x="318" y="226" className="bci-lbl">GND</text>
+      <path className="bci-leader" d="M338 232 L 306 248" />
+
+      {/* ---------- FOREARM + HAND ---------- */}
+      <g transform="translate(582 348)">
+        {/* forearm */}
+        <path className="bci-line" d="M320 12 C 262 6, 198 6, 152 12" fill="none" />
+        <path className="bci-line" d="M320 62 C 262 66, 198 64, 154 58" fill="none" />
+        {/* open hand */}
+        <g className="bci-hand bci-hand--open">
+          <path className="bci-line" d="M152 12 C 118 4, 80 2, 52 10 C 26 16, 10 26, 10 36 C 10 48, 30 58, 58 60 C 92 64, 128 62, 154 58" fill="none" />
+          <path className="bci-line bci-line--soft" d="M14 30 L 52 27 M16 44 L 54 44 M64 56 C 56 48, 56 38, 62 32" fill="none" />
+        </g>
+        {/* fist */}
+        <g className="bci-hand bci-hand--fist">
+          <path className="bci-line" d="M152 14 C 128 4, 96 2, 76 10 C 58 16, 50 26, 50 36 C 50 48, 60 56, 80 58 C 106 62, 132 60, 154 58" fill="none" />
+          <path className="bci-line bci-line--soft" d="M56 18 C 49 20, 49 25, 56 27 M54 30 C 47 32, 47 37, 54 39 M55 42 C 48 44, 48 49, 55 51" fill="none" />
+        </g>
+        {/* tap ripple at the fingertip */}
+        <circle className="bci-tap" cx="14" cy="34" r="8" />
+      </g>
+
+      {/* EMG pads */}
+      <Electrode x={736} y={376} r={10} hot={emgHot} ember={fire?.ember} delay={200} />
+      <Electrode x={800} y={390} r={10} hot={emgHot} ember={fire?.ember} delay={600} />
+
+      {/* arm labels + leaders */}
+      <text x="700" y="466" textAnchor="middle" className="bci-lbl">EMG CH1+ · Active</text>
+      <path className="bci-leader" d="M736 388 L 706 454" />
+      <text x="816" y="488" textAnchor="middle" className="bci-lbl">EMG CH1− · Reference</text>
+      <path className="bci-leader" d="M800 402 L 812 476" />
+
+      {/* ---------- OPENBCI BOX ---------- */}
+      <g>
+        <rect className="bci-box" x="402" y="172" width="176" height="104" />
+        {/* input ports */}
+        {[193, 211, 229, 247].map(y => <rect key={y} className="bci-pin" x="398" y={y} width="8" height="6" />)}
+        {[225, 243].map(y => <rect key={y} className="bci-pin" x="574" y={y} width="8" height="6" />)}
+        <text x="414" y="208" className="bci-title">OpenBCI</text>
+        <text x="414" y="226" className="bci-lbl bci-lbl--dim">Cyton · 8-ch · 250 Hz</text>
+        {/* pin header */}
+        {Array.from({ length: 8 }).map((_, i) => (
+          <rect key={i} className="bci-pin" x={414 + i * 13} y="248" width="7" height="9" />
+        ))}
+        <circle className="bci-led" cx="560" cy="190" r="3.5" />
+        {/* stubs down to the scope strips */}
+        <path className="bci-leader" d="M470 276 L 470 296 M510 276 L 510 296" />
+      </g>
+
+      {/* live scope traces */}
+      <ScopeStrip x={402} y={296} w={176} h={30} clipId="bciScope1"
+        label="EEG · FP" color="eeg" path={EEG_WAVE} burst={eegHot} fast={eegHot} />
+      <ScopeStrip x={402} y={334} w={176} h={30} clipId="bciScope2"
+        label="EMG · CH1" color="emg" path={EMG_WAVE} burst={emgHot} fast={emgHot} />
+
+      {/* status readout */}
+      <text x="402" y="390" className={"bci-lbl" + (fire ? "" : " bci-lbl--dim")}
+        fill={fire ? (fire.ember ? "var(--ember)" : "var(--pulse)") : undefined}>
+        {fire ? fire.status : "streaming · 250 Hz · 2 ch"}
+      </text>
+
+      {/* signal pulse racing down the active wires */}
+      {fire && (
+        <g key={tick}>
+          {(fire.ch === "eeg" ? ["fp1", "fp2"] : ["emg1", "emg2"]).map(w => (
+            <path key={w} d={BCI_WIRES[w]}
+              className={"bci-pulse " + (fire.ember ? "bci-pulse--ember" : "bci-pulse--cyan")} />
+          ))}
+        </g>
+      )}
+    </svg>
   );
 }
 
@@ -582,8 +688,34 @@ export function DigitalNexusDemo() {
 
 /* ---------- HACKATHON DEMO — Ultrahack DEFINE 2025 ------------------- */
 /* Camera-only wind prediction. User picks a wind condition; the pipeline
-   runs ResNet → LSTM → adjusted aim; a top-down range view draws the
-   trajectory + impact + angular error. */
+   runs ResNet → LSTM → adjusted aim; a top-down range view shows wind
+   particles, a camera scan, the uncorrected drift arc drawing itself,
+   then a tracer shot + impact ripple, with metrics counting up. */
+
+/* fixed pseudo-random positions for the wind streak particles */
+const WIND_SEEDS = [
+  [34, 84], [228, 70], [120, 128], [262, 150], [58, 182], [180, 96], [90, 250],
+  [210, 224], [150, 180], [44, 300], [246, 290], [140, 300], [74, 120], [196, 160],
+];
+
+/* count-up for the result metrics */
+function useCountUp(target, run, dur = 700) {
+  const [v, setV] = React.useState(0);
+  React.useEffect(() => {
+    if (!run) { setV(0); return; }
+    let raf, t0;
+    const tick = (now) => {
+      if (!t0) t0 = now;
+      const p = Math.min(1, (now - t0) / dur);
+      setV(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, run, dur]);
+  return v;
+}
+
 export function HackathonDemo() {
   // wind scenarios: vector represents [angle_deg, strength m/s], plus the
   // model's predicted-vs-actual error built in.
@@ -608,11 +740,20 @@ export function HackathonDemo() {
 
   const s = scenarios.find(x => x.id === picked);
   const fired = step === "fired";
+  const active = step !== "idle";
 
-  // Translate wind angle to an x-drift on the target plane (0–100 viewBox).
+  // Wind unit vector + drift on the target plane (0–300 viewBox).
   // angle 90 = right, 270 = left, etc.
-  const driftX = s ? Math.cos((s.wind.angle - 90) * Math.PI / 180) * s.wind.speed * 1.3 : 0;
-  const driftY = s ? Math.sin((s.wind.angle - 90) * Math.PI / 180) * s.wind.speed * 0.4 : 0;
+  const rad = s ? (s.wind.angle - 90) * Math.PI / 180 : 0;
+  const ux = Math.cos(rad), uy = Math.sin(rad);
+  const dx = s ? ux * s.wind.speed * 3.4 : 0;
+  const dy = s ? uy * s.wind.speed * 1.1 : 0;
+  const segLen = s ? 6 + s.wind.speed : 0;            // streak length ∝ speed
+  const travel = s ? 34 + s.wind.speed * 3 : 0;       // drift distance per loop
+  const windDur = s ? Math.max(0.9, 3.4 - s.wind.speed * 0.22) : 3;
+
+  const errVal = useCountUp(s ? s.error : 0, fired);
+  const msVal = useCountUp(42, fired);
 
   return (
     <div className="hack">
@@ -658,76 +799,109 @@ export function HackathonDemo() {
       <div className="hack__col hack__col--range">
         <div className="hack__lbl">Top-down range · 600 m</div>
         <div className="hack__range">
-          <svg viewBox="0 0 100 120" preserveAspectRatio="xMidYMid meet"
+          <svg viewBox="0 0 300 360" preserveAspectRatio="xMidYMid meet"
                width="100%" height="100%" style={{ display: "block" }}>
-            {/* range grid */}
             <defs>
-              <pattern id="rng" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M10 0 L0 0 0 10" fill="none" stroke="#1F2530" strokeWidth="0.3" />
+              <pattern id="hackGrid" width="30" height="30" patternUnits="userSpaceOnUse">
+                <path d="M30 0 L0 0 0 30" fill="none" stroke="#1A1F29" strokeWidth="0.8" />
               </pattern>
+              <linearGradient id="hackScanG" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="rgba(109,243,215,0)" />
+                <stop offset="0.5" stopColor="rgba(109,243,215,0.16)" />
+                <stop offset="1" stopColor="rgba(109,243,215,0)" />
+              </linearGradient>
+              <marker id="hackArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto">
+                <path d="M0 0 L10 5 L0 10 Z" fill="#F4B842" />
+              </marker>
             </defs>
-            <rect width="100" height="120" fill="url(#rng)" />
 
-            {/* shooter at bottom */}
-            <g transform="translate(50 112)">
-              <circle r="2" fill="#ECEEF1" />
-              <text y="6" textAnchor="middle" fontFamily="JetBrains Mono" fontSize="3" fill="#7C8492" letterSpacing="0.1em">SHOOTER</text>
+            <rect width="300" height="360" fill="url(#hackGrid)" />
+
+            {/* viewfinder corners — this is a camera feed, after all */}
+            <path className="hackr-corner" d="M8 20 L8 8 L20 8 M280 8 L292 8 L292 20 M292 340 L292 352 L280 352 M20 352 L8 352 L8 340" />
+
+            {/* range distance ticks */}
+            {[{ y: 238, m: "200" }, { y: 140, m: "400" }, { y: 42, m: "600" }].map(t => (
+              <g key={t.m}>
+                <line x1="8" y1={t.y} x2="16" y2={t.y} stroke="#39404D" strokeWidth="1" />
+                <text x="20" y={t.y + 2.5} className="hackr-txt">{t.m}m</text>
+              </g>
+            ))}
+
+            {/* wind streak particles — direction, length & speed match the scenario */}
+            {s && active && WIND_SEEDS.map((p, i) => (
+              <line key={i} className="hackr-wind"
+                x1={p[0]} y1={p[1]} x2={p[0] + ux * segLen} y2={p[1] + uy * segLen}
+                style={{
+                  "--wx": `${(ux * travel).toFixed(1)}px`,
+                  "--wy": `${(uy * travel).toFixed(1)}px`,
+                  animationDuration: `${windDur}s`,
+                  animationDelay: `${(-((i * 0.37) % windDur)).toFixed(2)}s`,
+                }} />
+            ))}
+
+            {/* camera scan sweep while the frame is being read */}
+            {(step === "camera" || step === "resnet") && (
+              <rect className="hackr-scanline" x="8" y="0" width="284" height="16" fill="url(#hackScanG)" />
+            )}
+
+            {/* shooter */}
+            <g transform="translate(150 336)">
+              <path d="M-6 6 L0 -6 L6 6" fill="none" stroke="#ECEEF1" strokeWidth="1.4" />
+              <text y="16" textAnchor="middle" className="hackr-txt">Shooter</text>
             </g>
 
-            {/* target up range */}
-            <g transform="translate(50 14)">
-              <circle r="9" fill="none" stroke="#1F2530" strokeWidth="0.6" />
-              <circle r="6" fill="none" stroke="#1F2530" strokeWidth="0.6" />
-              <circle r="3" fill="none" stroke="#7C8492" strokeWidth="0.6" />
-              <circle r="0.8" fill="#7C8492" />
-              <text y="-12" textAnchor="middle" fontFamily="JetBrains Mono" fontSize="3" fill="#7C8492" letterSpacing="0.1em">TARGET · 600 M</text>
+            {/* target */}
+            <g transform="translate(150 42)">
+              <circle r="27" fill="none" stroke="#1F2530" strokeWidth="1.4" />
+              <circle r="18" fill="none" stroke="#1F2530" strokeWidth="1.4" />
+              <circle r="9" fill="none" stroke="#7C8492" strokeWidth="1.4" />
+              <circle r="2.4" fill="#7C8492" />
+              <text y="-34" textAnchor="middle" className="hackr-txt">Target · 600 m</text>
+              {/* crosshair locks on while the LSTM solves the hold-over */}
+              {(step === "lstm" || fired) && (
+                <g className="hackr-cross">
+                  <line x1="-15" y1="0" x2="15" y2="0" />
+                  <line x1="0" y1="-15" x2="0" y2="15" />
+                  <circle r="8" fill="none" />
+                </g>
+              )}
+              {/* impact ripple + hit marker */}
+              {fired && (<>
+                <circle className="hackr-impact" r="14" />
+                <circle className="hackr-impact hackr-impact--late" r="22" />
+                <circle className="hackr-hit" r="3.2" />
+              </>)}
             </g>
 
-            {/* wind vector arrow at top-right corner */}
-            {s && step !== "idle" && step !== "camera" && (
-              <g transform="translate(82 22)" opacity={step === "resnet" || step === "lstm" || fired ? 1 : 0}
-                 style={{ transition: "opacity 400ms cubic-bezier(0.2,0.7,0.2,1)" }}>
+            {/* wind vector readout */}
+            {s && active && step !== "camera" && (
+              <g className="hackr-windvec" transform="translate(252 84)">
+                <text y="-12" textAnchor="middle">Wind · {s.wind.speed} m/s</text>
                 <line x1="0" y1="0"
-                      x2={Math.cos((s.wind.angle - 90) * Math.PI/180) * Math.min(s.wind.speed, 10)}
-                      y2={Math.sin((s.wind.angle - 90) * Math.PI/180) * Math.min(s.wind.speed, 10)}
-                      stroke="#F4B842" strokeWidth="0.6" markerEnd="url(#arr)" />
-                <text x="0" y="-3" textAnchor="middle" fontFamily="JetBrains Mono" fontSize="2.5" fill="#F4B842" letterSpacing="0.1em">
-                  WIND · {s.wind.speed} M/S
-                </text>
-                <defs>
-                  <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto">
-                    <path d="M0 0 L10 5 L0 10 Z" fill="#F4B842"/>
-                  </marker>
-                </defs>
+                  x2={(ux * Math.min(s.wind.speed, 10) * 2.4).toFixed(1)}
+                  y2={(uy * Math.min(s.wind.speed, 10) * 2.4).toFixed(1)}
+                  markerEnd="url(#hackArr)" />
               </g>
             )}
 
-            {/* naive (uncorrected) trajectory — dashed grey, shown once LSTM stage */}
+            {/* uncorrected drift arc — draws itself once the LSTM stage hits */}
             {(step === "lstm" || fired) && s && (
-              <line x1="50" y1="112"
-                    x2={50 + driftX} y2={14 + driftY}
-                    stroke="#7C8492" strokeWidth="0.4" strokeDasharray="1.4 1"
-                    opacity="0.7" />
+              <path className="hackr-naive" pathLength="1"
+                d={`M150 336 Q ${(150 + dx * 0.25).toFixed(1)} 200, ${(150 + dx).toFixed(1)} ${(42 + dy).toFixed(1)}`} />
             )}
-
-            {/* corrected trajectory — solid pulse, only after fire */}
             {fired && s && (
-              <>
-                <line x1="50" y1="112" x2="50" y2="14"
-                      stroke="#6DF3D7" strokeWidth="0.6" />
-                <circle cx="50" cy="14" r="1.4" fill="#6DF3D7">
-                  <animate attributeName="r" values="1.4;3.2;1.4" dur="0.7s" repeatCount="1" />
-                </circle>
-              </>
-            )}
-
-            {/* aim correction marker — small offset arrow showing how much we adjusted */}
-            {fired && s && (
-              <g transform="translate(50 60)">
-                <line x1={0} y1={0} x2={-driftX} y2={-driftY}
-                      stroke="#6DF3D7" strokeWidth="0.4" strokeDasharray="0.6 0.6" opacity="0.6" />
+              <g className="hackr-miss" transform={`translate(${(150 + dx).toFixed(1)} ${(42 + dy).toFixed(1)})`}>
+                <path d="M-4 -4 L4 4 M-4 4 L4 -4" />
+                <text x="8" y="3">drift</text>
               </g>
             )}
+
+            {/* corrected tracer + muzzle flash */}
+            {fired && (<>
+              <path className="hackr-shot" pathLength="1" d="M150 336 L150 42" />
+              <circle className="hackr-flash" cx="150" cy="330" r="5" />
+            </>)}
           </svg>
         </div>
 
@@ -736,7 +910,7 @@ export function HackathonDemo() {
             <>
               <div className="hack__metric">
                 <span className="hack__metric-lbl">Angular error</span>
-                <span className="hack__metric-val" style={{ color: "var(--pulse)" }}>{s.error}°</span>
+                <span className="hack__metric-val" style={{ color: "var(--pulse)" }}>{errVal.toFixed(1)}°</span>
               </div>
               <div className="hack__metric">
                 <span className="hack__metric-lbl">Target</span>
@@ -744,7 +918,7 @@ export function HackathonDemo() {
               </div>
               <div className="hack__metric">
                 <span className="hack__metric-lbl">Inference</span>
-                <span className="hack__metric-val">42 ms</span>
+                <span className="hack__metric-val">{Math.round(msVal)} ms</span>
               </div>
               <div className="hack__metric hack__metric--gold">
                 <span className="hack__medal">🥇</span>

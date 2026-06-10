@@ -8,13 +8,23 @@ import {
   RAGDemo, LSEGDemo, TelekomDemo, CloudGeometryDemo, DigitalNexusDemo,
   HackathonDemo, PlaceholderDemo, HeroScene,
 } from "./scenes.jsx";
+import { useInView, Reveal, TiltCard, useMagnetic } from "./fx.jsx";
 
 export function Nav() {
   const [scrolled, setScrolled] = React.useState(false);
+  const [progress, setProgress] = React.useState(0);
   React.useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    let raf = 0;
+    const update = () => {
+      setScrolled(window.scrollY > 40);
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(max > 0 ? Math.min(1, window.scrollY / max) : 0);
+    };
+    const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onScroll);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); };
   }, []);
   return (
     <nav className={"nav" + (scrolled ? " is-scrolled" : "")}>
@@ -33,12 +43,28 @@ export function Nav() {
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--pulse)", boxShadow: "0 0 0 4px var(--pulse-20)" }} />
         Currently @ LSEG · Telekom
       </div>
+      <span className="nav__progress" style={{ transform: `scaleX(${progress})` }} aria-hidden="true" />
     </nav>
   );
 }
 
 /* ---------- HERO with real 3D background ---------------------------- */
+/* Oscilloscope trace: a wavering signal line drawn across the hero,
+   with a bright pulse segment travelling along it forever. */
+function heroWavePath() {
+  const amps = [6, 16, 9, 26, 12, 30, 8, 22, 14, 28, 10, 18];
+  let d = "M0 40";
+  amps.forEach((a, i) => {
+    const x0 = i * 100;
+    d += ` C ${x0 + 30} ${40 - a}, ${x0 + 70} ${40 + a}, ${x0 + 100} 40`;
+  });
+  return d;
+}
+
 export function Hero() {
+  const ctaPrimary = useMagnetic(0.16);
+  const ctaSecondary = useMagnetic(0.16);
+  const wave = React.useMemo(heroWavePath, []);
   return (
     <header className="hero" id="top">
       <div className="hero__bg"><HeroScene /></div>
@@ -48,16 +74,22 @@ export function Hero() {
           AI Engineer · Bucharest, RO · Moving to Odense, DK · Sep 2026
         </div>
         <h1 className="hero__display">
-          I build systems<br/>
-          that <em>ship</em>.
+          <span className="hline"><span className="hline__in">I build systems</span></span>
+          <span className="hline"><span className="hline__in">that <em>ship</em>.</span></span>
         </h1>
         <p className="hero__sub">
           <strong>Andrei Lupica.</strong> RAG pipelines on AWS, agentic workflows, brain-computer interfaces, and a 1st-place hackathon win. Currently AI Engineer at LSEG and Deutsche Telekom.
         </p>
         <div className="hero__ctas">
-          <a href="#work" className="btn btn--primary">See the work <span aria-hidden>↓</span></a>
-          <a href="#contact" className="btn">Get in touch →</a>
+          <a href="#work" className="btn btn--primary" ref={ctaPrimary}>See the work <span aria-hidden>↓</span></a>
+          <a href="#contact" className="btn" ref={ctaSecondary}>Get in touch →</a>
         </div>
+      </div>
+      <div className="hero__wave" aria-hidden="true">
+        <svg viewBox="0 0 1200 80" preserveAspectRatio="none">
+          <path d={wave} className="hero__wave-base" fill="none" />
+          <path d={wave} className="hero__wave-trace" fill="none" />
+        </svg>
       </div>
       <div className="hero__scroll-hint">
         <span>scroll</span>
@@ -90,8 +122,10 @@ export function MarqueeTicker() {
 
 /* ---------- Section header ----------------------------------------- */
 export function SectionHeader({ num, title, meta }) {
+  const ref = React.useRef(null);
+  const inView = useInView(ref);
   return (
-    <div className="section-header">
+    <div className={"section-header" + (inView ? " is-in" : "")} ref={ref}>
       <div className="section-header__num">{num}</div>
       <h2 className="section-header__title" dangerouslySetInnerHTML={{ __html: title }} />
       <div className="section-header__meta">{meta}</div>
@@ -100,9 +134,10 @@ export function SectionHeader({ num, title, meta }) {
 }
 
 /* ---------- Project rows ------------------------------------------- */
-export function ProjectRow({ num, title, blurb, meta, isActive, onClick }) {
+export function ProjectRow({ num, title, blurb, meta, isActive, onClick, style }) {
   return (
     <div className={"project-row" + (isActive ? " is-active" : "")} role="link" tabIndex="0"
+      style={style}
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } }}>
       <div className="project-row__num">{num}</div>
@@ -285,12 +320,12 @@ export function Experience() {
     <section className="section section--exp" id="experience">
       <div className="shell">
         <SectionHeader num="03 / Experience" title="Six engagements, <em>two countries</em>, ten milestones." meta="2024 — now" />
-        <div className="timeline">
+        <Reveal className="timeline reveal-stagger" y={0}>
           <div className="timeline__viewport" ref={railRef}>
             <div className="timeline__track">
               <div className="timeline__line" />
               {items.map((it, i) => (
-                <div key={i} className={"tl-card tl-card--" + it.kind}>
+                <div key={i} className={"tl-card tl-card--" + it.kind} style={{ "--stagger": `${i * 80}ms` }}>
                   <div className="tl-card__yr">{it.year}</div>
                   <div className="tl-card__dot" />
                   <div className="tl-card__body">
@@ -306,7 +341,7 @@ export function Experience() {
             <button className="btn" onClick={() => scroll(-1)} aria-label="Earlier">←</button>
             <button className="btn" onClick={() => scroll(1)}  aria-label="Later">→</button>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -318,34 +353,34 @@ export function Awards() {
     <section className="section section--awards" id="awards">
       <div className="shell">
         <SectionHeader num="04 / Recognition" title="<em>Awards</em> & highlights." meta="2025 — 26" />
-        <div className="awards-grid">
-          <article className="award-card award-card--gold">
+        <Reveal className="awards-grid reveal-stagger" y={0}>
+          <TiltCard as="article" className="award-card award-card--gold" style={{ "--stagger": "0ms" }}>
             <div className="award-card__tag">1st Place</div>
             <div className="award-card__name">Ultrahack DEFINE 2025</div>
             <div className="award-card__by">powered by Sako · May 2025</div>
             <p className="award-card__body">
               Led a team to first place against international talent. Built a camera-only, real-time wind prediction model for bullet trajectories — ResNet-18 for features, LSTM for temporal drift. <strong>Under 5% angular error in 48 hours.</strong>
             </p>
-          </article>
+          </TiltCard>
 
-          <article className="award-card">
+          <TiltCard as="article" className="award-card" style={{ "--stagger": "120ms" }}>
             <div className="award-card__tag">Published</div>
             <div className="award-card__name">Minimal Command AAC — Thesis</div>
             <div className="award-card__by">Theseus · May 2026</div>
             <p className="award-card__body">
               Real-time brain-computer interface comparing classic signal processing against deep learning for facial-gesture detection. <strong>Cited in an Elsevier review paper (Biocybernetics and Biomedical Engineering).</strong>
             </p>
-          </article>
+          </TiltCard>
 
-          <article className="award-card">
+          <TiltCard as="article" className="award-card" style={{ "--stagger": "240ms" }}>
             <div className="award-card__tag">Selected</div>
             <div className="award-card__name">CERN Spring Campus</div>
             <div className="award-card__by">CERN · May 2025</div>
             <p className="award-card__body">
               Intensive IT and computing programme led by CERN researchers. Quantum Machine Learning (QML), graph databases, and scalable software-engineering architecture — preparation for SDU's quantum MSc.
             </p>
-          </article>
-        </div>
+          </TiltCard>
+        </Reveal>
       </div>
     </section>
   );
@@ -358,7 +393,7 @@ export function About() {
       <div className="shell">
         <SectionHeader num="05 / About" title="The <em>operator</em>." meta="Bio · 1 minute" />
         <div className="about">
-          <div>
+          <Reveal>
             <p className="about__lede">
               I'm Andrei. I build AI systems that <em>actually ship</em> — and I do it across very different domains in parallel.
             </p>
@@ -370,8 +405,8 @@ export function About() {
               <Chip>Robotics</Chip>
               <Chip>Quantum (next)</Chip>
             </div>
-          </div>
-          <div className="about__body">
+          </Reveal>
+          <Reveal className="about__body" delay={150}>
             <p>
               I'm an AI Engineer based in Bucharest. Right now I'm contracting at <strong>London Stock Exchange Group</strong> on an LLM + web-search pipeline for corporate hierarchies, and working part-time at <strong>Deutsche Telekom</strong> on a context-aware RAG architecture that resolves customer queries 35% faster.
             </p>
@@ -381,7 +416,7 @@ export function About() {
             <p>
               I also wrote a thesis on brain-computer interfaces (published on Theseus and <strong>cited in an Elsevier review paper, Biocybernetics and Biomedical Engineering</strong>) and won <strong>1st place at Ultrahack DEFINE 2025</strong>. In September I move to Odense to start an MSc in Quantum Computing at SDU.
             </p>
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>
@@ -393,13 +428,13 @@ export function Contact() {
   return (
     <section className="contact" id="contact">
       <div className="shell">
-        <div style={{ fontFamily: "var(--ff-mono)", fontSize: 12, color: "var(--pulse)", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 24 }}>
+        <Reveal y={12} style={{ fontFamily: "var(--ff-mono)", fontSize: 12, color: "var(--pulse)", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 24 }}>
           06 / Contact
-        </div>
-        <h2 className="contact__display">
+        </Reveal>
+        <Reveal as="h2" className="contact__display" y={48} delay={100}>
           Let's build something<br/>that <em>ships</em>.
-        </h2>
-        <div className="contact__row">
+        </Reveal>
+        <Reveal className="contact__row reveal-stagger" y={0} delay={200}>
           <div className="contact__group">
             <span className="lbl">Email</span>
             <a href="mailto:lupica.andrei@gmail.com">lupica.andrei@gmail.com</a>
@@ -420,7 +455,7 @@ export function Contact() {
             <span className="lbl">Based in</span>
             <a href="#">Bucharest, RO → Odense, DK</a>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

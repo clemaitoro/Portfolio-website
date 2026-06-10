@@ -440,16 +440,16 @@
   .work-split__featured .dnai__col { border-right: none; border-bottom: 1px solid var(--trace); }
   .work-split__featured .dnai__col:last-child { border-bottom: none; }
 
-  .work-split__featured .hack { grid-template-columns: 1fr; min-height: 0; }
-  .work-split__featured .hack__col--ctrl { border-right: none; border-bottom: 1px solid var(--trace); }
-  /* Cap the tall range SVG so the whole demo fits without scrolling. */
-  .work-split__featured .hack__range { flex: none; height: 300px; }
+  /* Keep the hack demo side-by-side: controls left, big range right.
+     The range keeps the SVG's 5:6 shape so it scales with the panel. */
+  .work-split__featured .hack { grid-template-columns: 0.85fr 1fr; min-height: 0; }
+  .work-split__featured .hack__pipe { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .work-split__featured .hack__stage:nth-child(2n)::after { display: none; }
+  .work-split__featured .hack__range { flex: none; height: auto; aspect-ratio: 5 / 6; }
 
-  /* The BCI 3D scene's gesture orbs sit far from center and overflow the
-     narrow panel. Give the scene a taller box and scale the whole render
-     down so everything stays inside. */
+  /* Give the BCI diagram a taller box in the narrow side panel so the
+     montage stays readable. */
   .work-split__featured .featured--3d .featured__scene { aspect-ratio: 3 / 2; }
-  .work-split__featured .featured--3d .stage3d { transform: scale(0.58); }
 }
 
 /* The panel slides in from the right each time the selection changes
@@ -1378,12 +1378,265 @@
 .placeholder-demo__role { font-family: var(--ff-mono); font-size: 13px; color: var(--ash); letter-spacing: 0.08em; margin-top: 8px; }
 .placeholder-demo__hint { font-family: var(--ff-sans); font-size: 16px; color: var(--ash); margin-top: 24px; }
 /* ============================================================
-   BCI scene — keyframes for the central pulse core
+   BCI scene — OpenBCI Cyton montage diagram
    ============================================================ */
-@keyframes bciCorePulse {
-  0%, 100% { box-shadow: 0 0 24px #6DF3D7, 0 0 48px rgba(109,243,215,0.6); transform: scale(1); }
-  50%      { box-shadow: 0 0 40px #6DF3D7, 0 0 80px rgba(109,243,215,0.9); transform: scale(1.15); }
+.bci-rig {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
+
+/* anatomy + headset linework */
+.bci-line       { stroke: #4A5260; fill: none; stroke-width: 1.3; stroke-linecap: round; }
+.bci-line--soft { stroke: #2E3542; }
+.bci-gear       { stroke: var(--ash); stroke-width: 1.4; }
+.bci-clip       { fill: var(--strata); stroke: var(--ash); stroke-width: 1.2; }
+.bci-frame      { fill: none; stroke: #1F2530; stroke-dasharray: 4 6; }
+.bci-leader     { stroke: #39404D; stroke-width: 1; stroke-dasharray: 2 4; fill: none; }
+.bci-lbl {
+  font-family: var(--ff-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  fill: var(--ash);
+}
+.bci-lbl--dim { fill: var(--ash-dim); font-size: 8.5px; }
+.bci-title {
+  font-family: var(--ff-mono);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  fill: var(--bone);
+}
+
+/* wires: dim base + slowly streaming dash overlay (always-on signal) */
+.bci-wire { stroke: #3A4150; fill: none; stroke-width: 1.3; }
+.bci-wire--flow {
+  stroke: rgba(109, 243, 215, 0.22);
+  fill: none;
+  stroke-width: 1.3;
+  stroke-dasharray: 2 10;
+  animation: bciFlow 1.4s linear infinite;
+}
+@keyframes bciFlow { to { stroke-dashoffset: -24; } }
+
+/* bright pulse racing along a wire when a gesture fires */
+.bci-pulse {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 46 900;
+  animation: bciPulseTravel 650ms cubic-bezier(0.3, 0, 0.4, 1) forwards;
+}
+.bci-pulse--cyan  { stroke: var(--pulse); filter: drop-shadow(0 0 5px rgba(109, 243, 215, 0.9)); }
+.bci-pulse--ember { stroke: var(--ember); filter: drop-shadow(0 0 5px rgba(244, 184, 66, 0.9)); }
+@keyframes bciPulseTravel {
+  from { stroke-dashoffset: 946; }
+  to   { stroke-dashoffset: -480; }
+}
+
+/* electrodes */
+.bci-el-ring {
+  fill: var(--ink);
+  stroke: var(--ash);
+  stroke-width: 1.5;
+  transition: stroke 180ms var(--ease-instrument), filter 180ms var(--ease-instrument);
+}
+.bci-el-core { fill: #3A4150; transition: fill 180ms var(--ease-instrument); }
+.bci-halo {
+  fill: none;
+  stroke: rgba(109, 243, 215, 0.35);
+  animation: bciHalo 3.2s var(--ease-instrument) infinite;
+}
+@keyframes bciHalo { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.5; } }
+.bci-elg.is-hot .bci-el-ring { stroke: var(--pulse); filter: drop-shadow(0 0 8px rgba(109, 243, 215, 0.9)); }
+.bci-elg.is-hot .bci-el-core { fill: var(--pulse); }
+.bci-elg.is-hot.is-ember .bci-el-ring { stroke: var(--ember); filter: drop-shadow(0 0 8px rgba(244, 184, 66, 0.9)); }
+.bci-elg.is-hot.is-ember .bci-el-core { fill: var(--ember); }
+
+/* OpenBCI box */
+.bci-box {
+  fill: var(--strata);
+  stroke: var(--trace);
+  transition: stroke 200ms var(--ease-instrument), filter 200ms var(--ease-instrument);
+}
+.bci-rig.is-firing .bci-box { stroke: var(--pulse-40); filter: drop-shadow(0 0 14px rgba(109, 243, 215, 0.25)); }
+.bci-rig.is-firing.is-ember .bci-box { stroke: rgba(244, 184, 66, 0.5); filter: drop-shadow(0 0 14px rgba(244, 184, 66, 0.22)); }
+.bci-pin { fill: #2A3140; }
+.bci-led { fill: var(--pulse); animation: bciLed 2.2s var(--ease-instrument) infinite; }
+@keyframes bciLed { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+/* live scope traces */
+.bci-strip { fill: var(--ink); stroke: var(--trace); }
+.bci-trace { fill: none; stroke-width: 1.3; }
+.bci-trace--eeg { stroke: var(--pulse); opacity: 0.85; }
+.bci-trace--emg { stroke: var(--ember); opacity: 0.85; }
+.bci-scroll { animation: bciScroll 5s linear infinite; }
+.bci-scroll--fast { animation-duration: 2.4s; }
+@keyframes bciScroll { to { transform: translateX(-140px); } }
+.bci-tracewrap { transition: transform 160ms var(--ease-instrument); }
+.bci-tracewrap.is-burst { transform: scaleY(3); }
+
+/* the face & hand react to gestures */
+.bci-eye {
+  stroke: #4A5260;
+  fill: none;
+  stroke-width: 1.3;
+  transition: transform 110ms var(--ease-instrument);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.bci-rig.is-blink .bci-eye { transform: scaleY(0.12); }
+.bci-brow { transition: transform 150ms var(--ease-instrument); }
+.bci-rig.is-brow .bci-brow { transform: translateY(-7px); }
+.bci-hand { transition: opacity 140ms var(--ease-instrument); }
+.bci-hand--fist { opacity: 0; }
+.bci-rig.is-fist .bci-hand--open { opacity: 0; }
+.bci-rig.is-fist .bci-hand--fist { opacity: 1; }
+.bci-tap {
+  fill: none;
+  stroke: var(--pulse);
+  stroke-width: 1.5;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.bci-rig.is-tap .bci-tap { animation: bciTapRipple 600ms var(--ease-instrument); }
+@keyframes bciTapRipple {
+  0%   { opacity: 1; transform: scale(0.25); }
+  100% { opacity: 0; transform: scale(2.6); }
+}
+
+/* ============================================================
+   HACKATHON range view — ballistics instrument animations
+   ============================================================ */
+.hackr-txt {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  fill: var(--ash-dim);
+}
+.hackr-corner { fill: none; stroke: rgba(109, 243, 215, 0.35); stroke-width: 1.2; }
+
+/* wind streaks drifting along the wind vector */
+.hackr-wind {
+  stroke: #4A5260;
+  stroke-width: 1;
+  stroke-linecap: round;
+  opacity: 0;
+  animation: hackrWindDrift linear infinite;
+}
+@keyframes hackrWindDrift {
+  0%   { transform: translate(0, 0); opacity: 0; }
+  12%  { opacity: 0.7; }
+  75%  { opacity: 0.45; }
+  100% { transform: translate(var(--wx, 0px), var(--wy, 0px)); opacity: 0; }
+}
+
+/* camera scan sweep */
+.hackr-scanline { animation: hackrScan 1s linear infinite; }
+@keyframes hackrScan { from { transform: translateY(0); } to { transform: translateY(336px); } }
+
+/* crosshair lock-on */
+.hackr-cross {
+  stroke: var(--pulse);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 0 4px rgba(109, 243, 215, 0.5));
+  animation: hackrCross 420ms var(--ease-instrument) both;
+}
+@keyframes hackrCross {
+  from { transform: scale(1.9) rotate(28deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* trajectories draw themselves (pathLength="1" normalizes the dash) */
+.hackr-naive {
+  fill: none;
+  stroke: #7C8492;
+  stroke-width: 1.2;
+  opacity: 0.55;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: hackrDraw 600ms ease-out forwards;
+}
+@keyframes hackrDraw { to { stroke-dashoffset: 0; } }
+.hackr-miss { stroke: #7C8492; opacity: 0; animation: hackrFadeIn 300ms ease-out 200ms forwards; }
+.hackr-miss text {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  fill: var(--ash);
+  stroke: none;
+}
+@keyframes hackrFadeIn { to { opacity: 1; } }
+
+.hackr-shot {
+  fill: none;
+  stroke: var(--pulse);
+  stroke-width: 1.6;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  filter: drop-shadow(0 0 5px rgba(109, 243, 215, 0.8));
+  animation: hackrDraw 240ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+.hackr-flash {
+  fill: var(--pulse);
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hackrFlash 260ms ease-out forwards;
+}
+@keyframes hackrFlash {
+  0%   { opacity: 0.9; transform: scale(0.4); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+.hackr-impact {
+  fill: none;
+  stroke: var(--pulse);
+  stroke-width: 1.4;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: hackrImpact 700ms var(--ease-instrument) 240ms forwards;
+}
+.hackr-impact--late { stroke-width: 1; animation-delay: 380ms; }
+@keyframes hackrImpact {
+  0%   { transform: scale(0.15); opacity: 0.95; }
+  100% { transform: scale(1); opacity: 0; }
+}
+.hackr-hit {
+  fill: var(--pulse);
+  filter: drop-shadow(0 0 6px rgba(109, 243, 215, 0.9));
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  animation: hackrHit 500ms var(--ease-instrument) 240ms forwards;
+}
+@keyframes hackrHit {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.8); }
+  100% { transform: scale(1); }
+}
+
+/* wind vector readout */
+.hackr-windvec { opacity: 0; animation: hackrFadeIn 400ms ease-out forwards; }
+.hackr-windvec line { stroke: var(--ember); stroke-width: 1.4; }
+.hackr-windvec text {
+  font-family: var(--ff-mono);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  fill: var(--ember);
+}
+
+/* result metrics cascade in once the shot lands */
+.hack__metrics .hack__metric { animation: riseIn 500ms var(--ease-instrument) both; }
+.hack__metrics .hack__metric:nth-child(2) { animation-delay: 90ms; }
+.hack__metrics .hack__metric:nth-child(3) { animation-delay: 180ms; }
+.hack__metrics .hack__metric:nth-child(4) { animation-delay: 280ms; }
 
 /* ============================================================
    HACKATHON DEMO (Ultrahack DEFINE)
@@ -1503,7 +1756,7 @@
   flex: 1;
   border: 1px solid var(--trace);
   background: #0B0D10;
-  min-height: 280px;
+  min-height: 360px;
   position: relative;
   overflow: hidden;
 }
@@ -1551,4 +1804,270 @@
 @media (max-width: 900px) {
   .hack { grid-template-columns: 1fr; }
   .hack__col--ctrl { border-right: none; border-bottom: 1px solid var(--trace); }
+}
+
+/* ============================================================
+   MOTION KIT — entrance choreography, scroll reveals,
+   micro-interactions. Everything routes through the global
+   prefers-reduced-motion kill-switch in colors_and_type.css.
+   ============================================================ */
+
+/* ---------- Shared keyframes ---------------------------------------- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+/* `to` only pins opacity, so the fill never freezes `transform` —
+   hover lifts and tilts keep working after the entrance. */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; }
+}
+
+/* ---------- Generic scroll reveal ------------------------------------ */
+.reveal {
+  opacity: 0;
+  transform: translateY(var(--reveal-y, 24px));
+  transition:
+    opacity 900ms var(--ease-instrument) var(--reveal-delay, 0ms),
+    transform 900ms var(--ease-instrument) var(--reveal-delay, 0ms);
+}
+.reveal.is-in { opacity: 1; transform: translateY(0); }
+
+/* Staggered children: parent carries .reveal-stagger, each child sets
+   its own --stagger delay inline. Animations (not transitions) so they
+   never collide with the children's own hover transitions. */
+.reveal-stagger:not(.is-in) .project-row,
+.reveal-stagger:not(.is-in) .tl-card,
+.reveal-stagger:not(.is-in) .award-card,
+.reveal-stagger:not(.is-in) .contact__group { opacity: 0; }
+.reveal-stagger.is-in .project-row,
+.reveal-stagger.is-in .tl-card,
+.reveal-stagger.is-in .award-card,
+.reveal-stagger.is-in .contact__group {
+  animation: riseIn 700ms var(--ease-instrument) both;
+  animation-delay: var(--stagger, 0ms);
+}
+.reveal-stagger.is-in .contact__group:nth-child(2) { --stagger: 70ms; }
+.reveal-stagger.is-in .contact__group:nth-child(3) { --stagger: 140ms; }
+.reveal-stagger.is-in .contact__group:nth-child(4) { --stagger: 210ms; }
+.reveal-stagger.is-in .contact__group:nth-child(5) { --stagger: 280ms; }
+
+/* Timeline rail draws itself once the section is reached. */
+.reveal-stagger:not(.is-in) .timeline__line { transform: scaleX(0); }
+.reveal-stagger.is-in .timeline__line {
+  transform-origin: 0 50%;
+  animation: tlDraw 1.4s var(--ease-instrument) 150ms both;
+}
+@keyframes tlDraw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ---------- Nav: entrance + scroll progress -------------------------- */
+.nav { animation: navDown 700ms var(--ease-instrument) 150ms both; }
+@keyframes navDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: none; }
+}
+.nav__progress {
+  position: absolute;
+  left: 0; bottom: -1px;
+  width: 100%; height: 2px;
+  background: linear-gradient(to right, var(--pulse), #B5F9EA);
+  box-shadow: 0 0 12px rgba(109, 243, 215, 0.55);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* ---------- Hero: load orchestration --------------------------------- */
+.hero__bg { animation: heroBgIn 1.8s var(--ease-instrument) both; }
+@keyframes heroBgIn {
+  from { opacity: 0; transform: scale(1.05); }
+  to   { opacity: 0.95; transform: none; }
+}
+
+.hero__eyebrow     { animation: fadeUp 800ms var(--ease-instrument) 150ms both; }
+.hero__sub         { animation: fadeUp 900ms var(--ease-instrument) 650ms both; }
+.hero__ctas        { animation: fadeUp 900ms var(--ease-instrument) 820ms both; }
+.hero__scroll-hint { animation: fadeUp 900ms var(--ease-instrument) 1200ms both; }
+
+/* Masked line-by-line headline rise. Padding + negative margin keep
+   descenders and the italic overhang from being clipped at rest. */
+.hline {
+  display: block;
+  overflow: hidden;
+  padding: 0.06em 0.12em 0.14em 0;
+  margin: -0.06em -0.12em -0.14em 0;
+}
+.hline__in {
+  display: inline-block;
+  animation: heroLineUp 950ms var(--ease-instrument) both;
+}
+.hline:first-child .hline__in { animation-delay: 280ms; }
+.hline:last-child  .hline__in { animation-delay: 430ms; }
+@keyframes heroLineUp {
+  from { transform: translateY(118%); }
+  to   { transform: translateY(0); }
+}
+.hero__display em { text-shadow: 0 0 32px rgba(109, 243, 215, 0.35); }
+
+/* Oscilloscope trace across the hero floor. The bright dash segment
+   travels the path forever — the signature "live signal". */
+.hero__wave {
+  position: absolute;
+  left: 0; right: 0; bottom: 26px;
+  height: 72px;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.55;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  animation: fadeUp 1.2s var(--ease-instrument) 1s both;
+}
+.hero__wave svg { width: 100%; height: 100%; }
+.hero__wave-base {
+  stroke: rgba(124, 132, 146, 0.28);
+  stroke-width: 1;
+}
+.hero__wave-trace {
+  stroke: var(--pulse);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-dasharray: 110 1380;
+  filter: drop-shadow(0 0 6px rgba(109, 243, 215, 0.8));
+  animation: traceTravel 6s linear infinite;
+}
+@keyframes traceTravel {
+  from { stroke-dashoffset: 1490; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* ---------- Ticker: edge fade + pause on hover ------------------------ */
+.ticker {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+}
+.ticker:hover .ticker__track { animation-play-state: paused; }
+
+/* ---------- Section header: sweep-in on scroll ------------------------ */
+.section-header::after {
+  content: "";
+  position: absolute;
+  top: -1px; left: 0;
+  width: 100%; height: 1px;
+  background: linear-gradient(to right, var(--pulse), rgba(109, 243, 215, 0));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+.section-header.is-in::after { animation: sweepLine 1.5s var(--ease-instrument) 150ms both; }
+@keyframes sweepLine {
+  0%   { transform: scaleX(0); opacity: 1; }
+  60%  { transform: scaleX(1); opacity: 0.9; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+.section-header__num,
+.section-header__title,
+.section-header__meta {
+  opacity: 0;
+  transition: opacity 800ms var(--ease-instrument), transform 800ms var(--ease-instrument);
+}
+.section-header__num   { transform: translateX(-14px); }
+.section-header__title { transform: translateY(28px); transition-delay: 100ms; }
+.section-header__meta  { transform: translateY(10px); transition-delay: 260ms; }
+.section-header.is-in .section-header__num,
+.section-header.is-in .section-header__title,
+.section-header.is-in .section-header__meta { opacity: 1; transform: none; }
+
+/* ---------- Featured panel: internal stagger on project switch ------- */
+.featured__scene { animation: featScene 750ms var(--ease-instrument) both; }
+@keyframes featScene {
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
+  to   { opacity: 1; transform: none; }
+}
+.featured__copy > div { animation: riseIn 700ms var(--ease-instrument) both; }
+.featured__copy > div:nth-child(1) { animation-delay: 140ms; }
+.featured__copy > div:nth-child(2) { animation-delay: 240ms; }
+.featured__copy > div:nth-child(3) { animation-delay: 340ms; }
+.featured .demo { animation: riseIn 700ms var(--ease-instrument) 420ms both; }
+
+/* ---------- Buttons: sheen sweep -------------------------------------- */
+.btn { position: relative; overflow: hidden; }
+.btn::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -70%;
+  width: 45%;
+  background: linear-gradient(105deg, transparent, rgba(236, 238, 241, 0.22), transparent);
+  transform: skewX(-18deg);
+  transition: left 600ms var(--ease-instrument);
+  pointer-events: none;
+}
+.btn:hover::after { left: 125%; }
+
+/* ---------- Tilt cards (awards) --------------------------------------- */
+.tilt {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transition: transform 220ms var(--ease-instrument);
+  will-change: transform;
+}
+/* Keep the existing hover lift, composed with the tilt. */
+.award-card.tilt:hover {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateY(-4px);
+}
+/* .tilt's transition would otherwise drop the card's border-color fade. */
+.award-card.tilt {
+  transition: border-color var(--d-base) var(--ease-instrument), transform 220ms var(--ease-instrument);
+}
+/* Cursor-tracking glow inside the card. */
+.award-card { position: relative; overflow: hidden; }
+.award-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(109, 243, 215, 0.08), transparent 65%);
+  opacity: 0;
+  transition: opacity 350ms var(--ease-instrument);
+  pointer-events: none;
+}
+.award-card:hover::after { opacity: 1; }
+.award-card--gold::after {
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgba(244, 184, 66, 0.1), transparent 65%);
+}
+
+/* ---------- Contact: underline draw on the italic word ---------------- */
+.contact__display em { position: relative; }
+.contact__display em::after {
+  content: "";
+  position: absolute;
+  left: 0.02em; right: 0.06em;
+  bottom: 0.02em;
+  height: 0.045em;
+  background: var(--pulse);
+  box-shadow: 0 0 18px rgba(109, 243, 215, 0.6);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 900ms var(--ease-instrument) 600ms;
+}
+.contact__display.is-in em::after { transform: scaleX(1); }
+
+/* ---------- Film grain over everything --------------------------------- */
+.page::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: 99;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  animation: grainShift 1.6s steps(4) infinite;
+}
+@keyframes grainShift {
+  0%, 100% { transform: translate(0, 0); }
+  25%      { transform: translate(-1.5%, 1%); }
+  50%      { transform: translate(1%, -1.5%); }
+  75%      { transform: translate(-1%, -1%); }
 }

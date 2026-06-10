@@ -6,6 +6,7 @@ import {
   Nav, Hero, MarqueeTicker, SectionHeader, ProjectRow,
   FeaturedProject, Experience, Awards, About, Contact, Footer,
 } from "./components.jsx";
+import { Reveal } from "./fx.jsx";
 
 export default function App() {
   const [focused, setFocused] = React.useState("lseg");
@@ -127,14 +128,15 @@ export default function App() {
 
           <div className="work-split">
             <div className="work-split__list">
-              <div className="work-list work-list--compact">
-                {projects.map(p => (
+              <Reveal className="work-list work-list--compact reveal-stagger" y={0}>
+                {projects.map((p, i) => (
                   <ProjectRow
                     key={p.id}
                     num={p.num}
                     title={p.title}
                     blurb={p.blurb}
                     meta={p.meta}
+                    style={{ "--stagger": `${i * 70}ms` }}
                     isActive={focused === p.id}
                     onClick={() => {
                       setFocused(p.id);
@@ -149,7 +151,7 @@ export default function App() {
                     }}
                   />
                 ))}
-              </div>
+              </Reveal>
 
               <div className="work-cue">
                 <span>Showing <span className="pulse-txt">{featuredCopy[focused].eyebrow}</span></span>
